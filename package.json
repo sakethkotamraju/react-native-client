@@ -6,5 +6,8 @@
     "workspaces": [
         "packages/*"
     ],
-    "packageManager": "yarn@4.4.0"
+    "packageManager": "yarn@4.4.0",
+    "scripts": {
+        "generate-key-script": "yarn workspace @mobile-wallet-protocol/client generate-key-script --cwd \"$PWD\""
+    }
 }

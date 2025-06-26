@@ -29,7 +29,8 @@
     "build": "tsc -p ./tsconfig.build.json && tsc-alias",
     "dev": "tsc --watch & nodemon --watch dist --delay 1 --exec tsc-alias",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext .ts,.tsx --fix"
+    "lint": "eslint . --ext .ts,.tsx --fix",
+    "generate-key-script": "ts-node scripts/generate-domain-keys.ts"
   },
   "dependencies": {
     "@noble/ciphers": "^0.5.3",
