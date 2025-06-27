@@ -29,7 +29,7 @@ The full public key is: `04 + [x-coordinate] + [y-coordinate]`
 
 ## What does it do?
 - Generates a secp256k1 key pair
-- Outputs a `.well-known/jwks.json` file in the current directory (for hosting at `https://yourdomain.com/.well-known/jwks.json`)
+- Outputs a `.well-known/base-jwks.json` file in the current directory (for hosting at `https://yourdomain.com/.well-known/base-jwks.json`)
 - Outputs a `domain-verification-private-key.txt` file (for secure storage and use with the SDK)
 
 ## Usage
@@ -41,7 +41,7 @@ yarn generate-key-script
 ```
 
 ## Output
-- `.well-known/jwks.json`: Public key in JWKS format for domain verification
+- `.well-known/base-jwks.json`: Public key in JWKS format for domain verification
 - `domain-verification-private-key.txt`: Private key (keep this secure!)
 
 ## Getting Started with Origin Verification
@@ -55,14 +55,14 @@ yarn generate-key-script
 ```
 
 This will create:
-- `.well-known/jwks.json` - Your public key (host this on your domain)
+- `.well-known/base-jwks.json` - Your public key (host this on your domain)
 - `domain-verification-private-key.txt` - Your private key (keep secure!)
 
 ### Step 2: Host Your Public Key
 
-Host the `jwks.json` file at:
+Host the `base-jwks.json` file at:
 ```
-https://yourdomain.com/.well-known/jwks.json
+https://yourdomain.com/.well-known/base-jwks.json
 ```
 
 This allows Coinbase to verify signatures from your domain.

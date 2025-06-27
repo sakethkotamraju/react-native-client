@@ -70,7 +70,7 @@ function main() {
     mkdirSync(wellKnownDir, { recursive: true });
     
     // Write the JWKS file
-    const jwksPath = join(wellKnownDir, 'jwks.json');
+    const jwksPath = join(wellKnownDir, 'base-jwks.json');
     writeFileSync(jwksPath, JSON.stringify(jwks, null, 2));
     
     // Write the private key to a separate file
@@ -83,7 +83,7 @@ function main() {
     console.log(`   • ${privateKeyPath} - Private key (keep this secure!)\n`);
     
     console.log('🌐 Next steps:');
-    console.log('   1. Host the jwks.json file at: https://yourdomain.com/.well-known/jwks.json');
+    console.log('   1. Host the base-jwks.json file at: https://yourdomain.com/.well-known/base-jwks.json');
     console.log('   2. Store the private key securely for use with the SDK');
     console.log('   3. Use the private key with the SDK\'s generateSignature function\n');
     

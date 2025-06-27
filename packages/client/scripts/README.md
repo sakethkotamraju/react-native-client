@@ -15,9 +15,9 @@ yarn generate-key-script
 
 **What it does:**
 - Generates a secp256k1 key pair
-- Creates a `.well-known/jwks.json` file in JWKS format
+- Creates a `.well-known/base-jwks.json` file in JWKS format
 - Creates a `domain-verification-private-key.txt` file with the private key
 
 **Output:**
-- `.well-known/jwks.json` - Public key in JWKS format for domain verification
+- `.well-known/base-jwks.json` - Public key in JWKS format for domain verification
 - `domain-verification-private-key.txt` - Private key (keep secure!)
