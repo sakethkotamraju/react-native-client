@@ -21,5 +21,3 @@ yarn generate-key-script
 **Output:**
 - `.well-known/jwks.json` - Public key in JWKS format for domain verification
 - `domain-verification-private-key.txt` - Private key (keep secure!)
-
-For detailed documentation, see [Domain Verification Key Generation](../../docs/domain-verification-key-generation.md). 
