@@ -33,6 +33,25 @@ export interface ProviderInterface extends ProviderEventEmitter {
 
 export type ProviderEventCallback = ProviderInterface['emit'];
 
+export interface OriginVerification {
+  /**
+   * @param domain
+   * @type string
+   * @description The domain for which origin verification is enabled
+   * @example "www.example.com"
+   */
+  domain: string;
+  /**
+   * @param generateSignature
+   * @type function
+   * @description Async function that generates a signature for domain verification
+   * @param nonce - The nonce provided by the wallet for this request
+   * @param payload - The request payload to be signed
+   * @returns Promise<string> - The signature as a string
+   */
+  generateSignature: (nonce: string, payload: unknown) => Promise<string>;
+}
+
 export interface AppMetadata {
   /**
    * @param name
@@ -59,4 +78,10 @@ export interface AppMetadata {
    * @example 'myapp://'
    */
   customScheme: string;
+  /**
+   * @param originVerification
+   * @type {OriginVerification}
+   * @description Optional origin verification configuration for domain verification
+   */
+  originVerification?: OriginVerification;
 }

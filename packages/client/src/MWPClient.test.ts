@@ -285,6 +285,18 @@ describe('MWPClient', () => {
       ]);
       expect(storageStoreSpy).toHaveBeenCalledWith('walletCapabilities', mockCapabilities);
     });
+
+    it('should generate UUID for wallet_requestNonce', async () => {
+      const mockRequest: RequestArguments = {
+        method: 'wallet_requestNonce',
+        params: { domain: 'example.com' },
+      };
+
+      const result = await client.request(mockRequest);
+
+      // Verify it returns a UUID (36 characters with hyphens)
+      expect(result).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+    });
   });
 
   describe('reset', () => {
@@ -295,6 +307,29 @@ describe('MWPClient', () => {
       expect(mockKeyManager.clear).toHaveBeenCalled();
       expect(client['accounts']).toEqual([]);
       expect(client['chain']).toEqual({ id: 1 });
+    });
+  });
+
+  describe('requestNonce', () => {
+    it('should generate UUID when origin verification is configured', async () => {
+      // Create a client with origin verification
+      const clientWithVerification = await MWPClient.createInstance({
+        metadata: mockMetadata,
+        wallet: mockWallet,
+        originVerification: {
+          domain: 'example.com',
+          generateSignature: jest.fn().mockResolvedValue('signature'),
+        },
+      });
+
+      const nonce = await clientWithVerification.requestNonce();
+
+      // Verify it returns a UUID (36 characters with hyphens)
+      expect(nonce).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+    });
+
+    it('should throw error when origin verification is not configured', async () => {
+      await expect(client.requestNonce()).rejects.toThrow('Origin verification not configured');
     });
   });
 });

@@ -24,6 +24,7 @@ import {
   fetchRPCRequest,
 } from ':core/util/utils';
 import { Wallet } from ':core/wallet';
+import { OriginVerification } from ':core/provider/interface';
 
 type Chain = {
   id: number;
@@ -33,6 +34,7 @@ type Chain = {
 type MWPClientOptions = {
   metadata: AppMetadata;
   wallet: Wallet;
+  originVerification?: OriginVerification;
 };
 
 export class MWPClient {
@@ -40,11 +42,12 @@ export class MWPClient {
   private readonly wallet: Wallet;
   private readonly keyManager: KeyManager;
   private readonly storage: ScopedAsyncStorage;
+  private readonly originVerification?: OriginVerification;
 
   private accounts: AddressString[];
   private chain: Chain;
 
-  private constructor({ metadata, wallet }: MWPClientOptions) {
+  private constructor({ metadata, wallet, originVerification }: MWPClientOptions) {
     this.metadata = {
       ...metadata,
       name: metadata.name || 'Dapp',
@@ -52,6 +55,7 @@ export class MWPClient {
     };
 
     this.wallet = wallet;
+    this.originVerification = originVerification;
     this.keyManager = new KeyManager({ wallet: this.wallet });
     this.storage = new ScopedAsyncStorage(this.wallet.name, 'MWPClient');
 
@@ -119,6 +123,20 @@ export class MWPClient {
     return accounts;
   }
 
+  /**
+   * Request a nonce for origin verification
+   * @returns Promise<string> - The nonce provided by the wallet
+   */
+  async requestNonce(): Promise<string> {
+    if (!this.originVerification) {
+      throw standardErrors.rpc.internal('Origin verification not configured');
+    }
+
+    // For now, generate a UUID locally instead of calling the wallet API
+    // In production, this would call: this.request({ method: 'wallet_requestNonce', params: { domain: this.originVerification.domain } })
+    return crypto.randomUUID();
+  }
+
   async request(request: RequestArguments) {
     if (this.accounts.length === 0) {
       throw standardErrors.provider.unauthorized();
@@ -139,6 +157,10 @@ export class MWPClient {
         return hexStringFromNumber(this.chain.id);
       case 'wallet_getCapabilities':
         return this.storage.loadObject(WALLET_CAPABILITIES_STORAGE_KEY);
+      case 'wallet_requestNonce':
+        // For now, generate a UUID locally instead of calling the wallet API
+        // In production, this would return this.sendRequestToPopup(request);
+        return crypto.randomUUID();
       case 'wallet_switchEthereumChain':
         return this.handleSwitchChainRequest(request);
       case 'eth_ecRecover':
@@ -163,6 +185,42 @@ export class MWPClient {
   }
 
   private async sendRequestToPopup(request: RequestArguments) {
+    // If origin verification is configured and accounts are available, automatically handle nonce and signature
+    if (this.originVerification && this.accounts.length > 0) {
+      try {
+        // Request nonce from wallet
+        const nonce = await this.requestNonce();
+        
+        // Generate signature using the developer's function
+        const signature = await this.originVerification.generateSignature(nonce, request);
+        
+        // Add signature to the request
+        const requestWithSignature = {
+          ...request,
+          params: {
+            ...request.params,
+            originVerification: {
+              domain: this.originVerification.domain,
+              nonce,
+              signature
+            }
+          }
+        };
+        
+        const response = await this.sendEncryptedRequest(requestWithSignature);
+        const decrypted = await this.decryptResponseMessage(response);
+
+        const result = decrypted.result;
+        if ('error' in result) throw result.error;
+
+        return result.value;
+      } catch (error) {
+        // If nonce request fails, fall back to regular request
+        console.warn('Origin verification failed, falling back to regular request:', error);
+      }
+    }
+
+    // Regular request flow (no origin verification or fallback)
     const response = await this.sendEncryptedRequest(request);
     const decrypted = await this.decryptResponseMessage(response);
 
