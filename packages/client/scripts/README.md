@@ -6,7 +6,7 @@ This directory contains utility scripts for the Mobile Wallet Protocol client.
 
 ### `generate-domain-keys.ts`
 
-Generates secp256k1 key pairs for Coinbase domain verification.
+Generates secp256k1 key pairs for Base domain verification.
 
 **Usage:**
 ```bash

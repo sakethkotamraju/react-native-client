@@ -1,6 +1,6 @@
 # Domain Verification Key Generation
 
-This script generates a secp256k1 key pair and outputs a JWKS (JSON Web Key Set) file for Coinbase domain verification, as well as a private key for signing.
+This script generates a secp256k1 key pair and outputs a JWKS (JSON Web Key Set) file for Base domain verification, as well as a private key for signing.
 
 ## What is JWKS?
 
@@ -65,7 +65,7 @@ Host the `base-jwks.json` file at:
 https://yourdomain.com/.well-known/base-jwks.json
 ```
 
-This allows Coinbase to verify signatures from your domain.
+This allows Base to verify signatures from your domain.
 
 ## Example JWKS Output
 ```json
@@ -78,7 +78,7 @@ This allows Coinbase to verify signatures from your domain.
       "x": "base64url-encoded-x-coordinate",
       "y": "base64url-encoded-y-coordinate",
       "use": "sig",
-      "kid": "coinbase-domain-verification",
+      "kid": "base-domain-verification",
       "alg": "ES256K"
     }
   ]
@@ -91,11 +91,11 @@ This allows Coinbase to verify signatures from your domain.
 - `crv`: Curve name ("secp256k1" for Bitcoin/Ethereum curve)
 - `x`, `y`: Base64URL-encoded x and y coordinates of the public key
 - `use`: Key usage ("sig" for signing)
-- `kid`: Key ID for identification ("coinbase-domain-verification")
+- `kid`: Key ID for identification ("base-domain-verification")
 - `alg`: Algorithm ("ES256K" for ECDSA with secp256k1 and SHA-256)
 
 ## Why?
-This enables secure domain verification for Coinbase Wallet SDK integrations. The SDK will use the private key to sign requests, and Coinbase will verify signatures using the public key hosted at your domain.
+This enables secure domain verification for Base Wallet SDK integrations. The SDK will use the private key to sign requests, and Base will verify signatures using the public key hosted at your domain.
 
 ---
 **Keep your private key safe!** Never share it or commit it to source control. 
