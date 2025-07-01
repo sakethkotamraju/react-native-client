@@ -1,4 +1,4 @@
-import type { AppMetadata, EIP1193Provider, Wallet } from '@mobile-wallet-protocol/client';
+import type { AppMetadata, EIP1193Provider, Wallet, OriginVerification } from '@mobile-wallet-protocol/client';
 import { ChainNotConfiguredError, type Connector, createConnector } from '@wagmi/core';
 import type { Omit } from '@wagmi/core/internal';
 import {
@@ -21,6 +21,7 @@ type WagmiWallet = Wallet & {
 export type CreateConnectorParameters = {
   metadata: Omit<AppMetadata, 'chainIds'>;
   wallet: WagmiWallet;
+  originVerification?: OriginVerification;
 };
 
 export function createConnectorFromWallet(parameters: CreateConnectorParameters) {
@@ -128,6 +129,7 @@ export function createConnectorFromWallet(parameters: CreateConnectorParameters)
             chainIds: config.chains.map((x) => x.id),
           },
           wallet: parameters.wallet,
+          originVerification: parameters.originVerification,
         });
       }
 

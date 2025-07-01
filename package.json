@@ -8,6 +8,7 @@
     ],
     "packageManager": "yarn@4.4.0",
     "scripts": {
-        "generate-key-script": "yarn workspace @mobile-wallet-protocol/client generate-key-script --cwd \"$PWD\""
+        "generate-key-script": "yarn workspace @mobile-wallet-protocol/client generate-key-script --cwd \"$PWD\"",
+        "test:domain-verification": "yarn workspace @mobile-wallet-protocol/client test:domain-verification --cwd \"$PWD\""
     }
 }

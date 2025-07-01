@@ -46,10 +46,10 @@ export interface OriginVerification {
    * @type function
    * @description Async function that generates a signature for domain verification
    * @param nonce - The nonce provided by the wallet for this request
-   * @param payload - The request payload to be signed
+   * @param requestData - The request data to be signed
    * @returns Promise<string> - The signature as a string
    */
-  generateSignature: (nonce: string, payload: unknown) => Promise<string>;
+  generateSignature: (nonce: string, requestData: unknown) => Promise<string>;
 }
 
 export interface AppMetadata {
@@ -78,10 +78,4 @@ export interface AppMetadata {
    * @example 'myapp://'
    */
   customScheme: string;
-  /**
-   * @param originVerification
-   * @type {OriginVerification}
-   * @description Optional origin verification configuration for domain verification
-   */
-  originVerification?: OriginVerification;
 }

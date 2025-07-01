@@ -2,7 +2,7 @@
 
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { randomBytes } from '@noble/hashes/utils';
-import { mkdirSync, writeFileSync } from 'fs';
+import { writeFileSync } from 'fs';
 import { join } from 'path';
 
 // Base64URL encoding function
@@ -12,16 +12,6 @@ function base64url(buffer: Uint8Array): string {
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=/g, '');
-}
-
-function getOutputDir(): string {
-  // Check for --cwd argument
-  const cwdArgIndex = process.argv.indexOf('--cwd');
-  if (cwdArgIndex !== -1 && process.argv[cwdArgIndex + 1]) {
-    return process.argv[cwdArgIndex + 1];
-  }
-  // Fallbacks
-  return process.env.INIT_CWD || process.cwd();
 }
 
 function generateDomainVerificationKeys() {
@@ -44,7 +34,7 @@ function generateDomainVerificationKeys() {
     x,
     y,
     use: 'sig',
-    kid: 'coinbase-domain-verification',
+    kid: 'base-domain-verification',
     alg: 'ES256K'
   };
   
@@ -59,22 +49,23 @@ function generateDomainVerificationKeys() {
 
 function main() {
   try {
-    const outputDir = getOutputDir();
-
     console.log('🔑 Generating Coinbase domain verification keys...\n');
     
     const { jwks, privateKey } = generateDomainVerificationKeys();
     
-    // Create .well-known directory if it doesn't exist
-    const wellKnownDir = join(outputDir, '.well-known');
-    mkdirSync(wellKnownDir, { recursive: true });
+    // Try to get the project root by going up from the current directory
+    let projectRoot = process.cwd();
+    if (projectRoot.includes('packages/client')) {
+      // If we're in packages/client, go up to the project root
+      projectRoot = projectRoot.replace('/packages/client', '');
+    }
     
-    // Write the JWKS file
-    const jwksPath = join(wellKnownDir, 'jwks.json');
+    // Write the JWKS file in the project root directory
+    const jwksPath = join(projectRoot, 'base-jwks.json');
     writeFileSync(jwksPath, JSON.stringify(jwks, null, 2));
     
-    // Write the private key to a separate file
-    const privateKeyPath = join(outputDir, 'domain-verification-private-key.txt');
+    // Write the private key to a separate file in the project root directory
+    const privateKeyPath = join(projectRoot, 'domain-verification-private-key.txt');
     writeFileSync(privateKeyPath, privateKey);
     
     console.log('✅ Successfully generated domain verification keys!\n');
@@ -83,7 +74,7 @@ function main() {
     console.log(`   • ${privateKeyPath} - Private key (keep this secure!)\n`);
     
     console.log('🌐 Next steps:');
-    console.log('   1. Host the jwks.json file at: https://yourdomain.com/.well-known/jwks.json');
+    console.log('   1. Host the base-jwks.json file at: https://yourdomain.com/.well-known/base-jwks.json');
     console.log('   2. Store the private key securely for use with the SDK');
     console.log('   3. Use the private key with the SDK\'s generateSignature function\n');
     

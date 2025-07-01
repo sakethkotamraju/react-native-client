@@ -194,8 +194,8 @@ export class MWPClient {
         // Generate signature using the developer's function
         const signature = await this.originVerification.generateSignature(nonce, request);
         
-        // Add signature to the request
-        const requestWithSignature = {
+        // Add domain verification to the request params
+        const requestWithVerification = {
           ...request,
           params: {
             ...request.params,
@@ -207,7 +207,7 @@ export class MWPClient {
           }
         };
         
-        const response = await this.sendEncryptedRequest(requestWithSignature);
+        const response = await this.sendEncryptedRequest(requestWithVerification);
         const decrypted = await this.decryptResponseMessage(response);
 
         const result = decrypted.result;
