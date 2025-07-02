@@ -127,13 +127,13 @@ export class MWPClient {
    * Request a nonce for origin verification
    * @returns Promise<string> - The nonce provided by the wallet
    */
-  async requestNonce(): Promise<string> {
+  async getNonce(): Promise<string> {
     if (!this.originVerification) {
       throw standardErrors.rpc.internal('Origin verification not configured');
     }
 
     // For now, generate a UUID locally instead of calling the wallet API
-    // In production, this would call: this.request({ method: 'wallet_requestNonce', params: { domain: this.originVerification.domain } })
+    // In the future, this would call: this.request({ method: 'wallet_getNonce' })
     return crypto.randomUUID();
   }
 
@@ -157,9 +157,8 @@ export class MWPClient {
         return hexStringFromNumber(this.chain.id);
       case 'wallet_getCapabilities':
         return this.storage.loadObject(WALLET_CAPABILITIES_STORAGE_KEY);
-      case 'wallet_requestNonce':
+      case 'wallet_getNonce':
         // For now, generate a UUID locally instead of calling the wallet API
-        // In production, this would return this.sendRequestToPopup(request);
         return crypto.randomUUID();
       case 'wallet_switchEthereumChain':
         return this.handleSwitchChainRequest(request);
@@ -185,42 +184,6 @@ export class MWPClient {
   }
 
   private async sendRequestToPopup(request: RequestArguments) {
-    // If origin verification is configured and accounts are available, automatically handle nonce and signature
-    if (this.originVerification && this.accounts.length > 0) {
-      try {
-        // Request nonce from wallet
-        const nonce = await this.requestNonce();
-        
-        // Generate signature using the developer's function
-        const signature = await this.originVerification.generateSignature(nonce, request);
-        
-        // Add domain verification to the request params
-        const requestWithVerification = {
-          ...request,
-          params: {
-            ...request.params,
-            originVerification: {
-              domain: this.originVerification.domain,
-              nonce,
-              signature
-            }
-          }
-        };
-        
-        const response = await this.sendEncryptedRequest(requestWithVerification);
-        const decrypted = await this.decryptResponseMessage(response);
-
-        const result = decrypted.result;
-        if ('error' in result) throw result.error;
-
-        return result.value;
-      } catch (error) {
-        // If nonce request fails, fall back to regular request
-        console.warn('Origin verification failed, falling back to regular request:', error);
-      }
-    }
-
-    // Regular request flow (no origin verification or fallback)
     const response = await this.sendEncryptedRequest(request);
     const decrypted = await this.decryptResponseMessage(response);
 
