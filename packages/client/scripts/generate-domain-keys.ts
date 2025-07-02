@@ -49,7 +49,7 @@ function generateDomainVerificationKeys() {
 
 function main() {
   try {
-    console.log('🔑 Generating Coinbase domain verification keys...\n');
+    console.log('🔑 Generating Base domain verification keys...\n');
     
     const { jwks, privateKey } = generateDomainVerificationKeys();
     
