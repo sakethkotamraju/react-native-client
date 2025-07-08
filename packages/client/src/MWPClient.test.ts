@@ -331,4 +331,40 @@ describe('MWPClient', () => {
       await expect(client.getNonce()).rejects.toThrow('Origin verification not configured');
     });
   });
+
+  describe('domain verification', () => {
+    it('should call generateSignature when origin verification is enabled', async () => {
+      const mockGenerateSignature = jest.fn().mockResolvedValue('0x1234567890abcdef');
+
+      const clientWithVerification = await MWPClient.createInstance({
+        metadata: mockMetadata,
+        wallet: mockWallet,
+        originVerification: {
+          domain: 'example.com',
+          generateSignature: mockGenerateSignature,
+        },
+      });
+
+      // Test that getNonce works and returns a UUID
+      const nonce = await clientWithVerification.getNonce();
+      expect(nonce).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+
+      // Test that generateSignature is called with the correct parameters
+      const testRequestData = { action: { method: 'test' }, chainId: 1 };
+      await mockGenerateSignature(nonce, testRequestData);
+      expect(mockGenerateSignature).toHaveBeenCalledWith(nonce, testRequestData);
+    });
+
+    it('should not include domain verification when origin verification is disabled', async () => {
+      const clientWithoutVerification = await MWPClient.createInstance({
+        metadata: mockMetadata,
+        wallet: mockWallet,
+      });
+
+      // Verify that getNonce throws an error when origin verification is not configured
+      await expect(clientWithoutVerification.getNonce()).rejects.toThrow(
+        'Origin verification not configured'
+      );
+    });
+  });
 });

@@ -13,10 +13,17 @@ export type EncryptedData = {
   cipherText: Uint8Array;
 };
 
+export interface DomainVerification {
+  domain: string;
+  nonce: string;
+  signature: string;
+}
+
 export interface RPCRequestMessage extends RPCMessage {
   sdkVersion: string;
   callbackUrl: string;
   customScheme?: string;
+  domainVerification?: DomainVerification;
   content:
     | {
         handshake: RequestAccountsAction;

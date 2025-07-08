@@ -6,7 +6,12 @@ import {
   importKeyFromHexString,
 } from ':core/cipher/cipher';
 import { standardErrors } from ':core/error';
-import { RPCRequestMessage, RPCResponse, RPCResponseMessage } from ':core/message';
+import {
+  RPCRequestMessage,
+  RPCResponse,
+  RPCResponseMessage,
+  DomainVerification,
+} from ':core/message';
 import { AppMetadata, RequestArguments } from ':core/provider/interface';
 import { ScopedAsyncStorage } from ':core/storage/ScopedAsyncStorage';
 import { AddressString } from ':core/type';
@@ -242,13 +247,34 @@ export class MWPClient {
       },
       sharedSecret
     );
-    const message = await this.createRequestMessage({ encrypted });
+
+    let domainVerification: DomainVerification | undefined;
+
+    // Add domain verification if origin verification is enabled
+    if (this.originVerification) {
+      const nonce = await this.getNonce();
+      const requestData = {
+        action: request,
+        chainId: this.chain.id,
+      };
+
+      const signature = await this.originVerification.generateSignature(nonce, requestData);
+
+      domainVerification = {
+        domain: this.originVerification.domain,
+        nonce,
+        signature,
+      };
+    }
+
+    const message = await this.createRequestMessage({ encrypted }, domainVerification);
 
     return postRequestToWallet(message, this.metadata.customScheme, this.wallet);
   }
 
   private async createRequestMessage(
-    content: RPCRequestMessage['content']
+    content: RPCRequestMessage['content'],
+    domainVerification?: DomainVerification
   ): Promise<RPCRequestMessage> {
     const publicKey = await exportKeyToHexString('public', await this.keyManager.getOwnPublicKey());
     return {
@@ -258,6 +284,7 @@ export class MWPClient {
       sdkVersion: LIB_VERSION,
       timestamp: new Date(),
       callbackUrl: this.metadata.customScheme,
+      domainVerification,
     };
   }
 
