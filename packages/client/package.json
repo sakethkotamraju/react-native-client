@@ -30,7 +30,8 @@
     "dev": "tsc --watch & nodemon --watch dist --delay 1 --exec tsc-alias",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx --fix",
-    "generate-key-script": "ts-node scripts/generate-domain-keys.ts"
+    "generate-key-script": "ts-node scripts/generate-domain-keys.ts",
+    "validate-key-script": "node scripts/verify-signature.js"
   },
   "dependencies": {
     "@noble/ciphers": "^0.5.3",
@@ -81,6 +82,7 @@
     "ts-node": "^10.9.1",
     "tsc-alias": "^1.8.8",
     "tslib": "^2.6.0",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "secp256k1": "^5.0.0"
   }
 }

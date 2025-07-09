@@ -17,7 +17,7 @@ function base64url(buffer: Uint8Array): string {
 function generateDomainVerificationKeys() {
   // Generate a random private key
   const privateKeyBytes = randomBytes(32);
-  const privateKey = base64url(privateKeyBytes);
+  const privateKey = Buffer.from(privateKeyBytes).toString('hex');
   
   // Get the uncompressed public key from the private key
   const publicKey = secp256k1.getPublicKey(privateKeyBytes, false); // false = uncompressed
