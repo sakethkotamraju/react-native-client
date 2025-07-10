@@ -60,7 +60,7 @@ This allows Base to verify signatures from your domain.
 
 ### Basic Setup
 
-Add the `originVerification` parameter to your provider configuration:
+Add the `domainVerification` parameter to your provider configuration:
 
 ```typescript
 import { EIP1193Provider, Wallets } from '@mobile-wallet-protocol/client';
@@ -71,7 +71,7 @@ const provider = new EIP1193Provider({
     customScheme: 'myapp://',
   },
   wallet: Wallets.CoinbaseSmartWallet,
-  originVerification: {
+  domainVerification: {
     domain: "www.example.com",
     generateSignature: async (nonce, requestData) => {
       // Developer implements signing with their private key
@@ -110,7 +110,7 @@ const provider = new EIP1193Provider({
     customScheme: 'myapp://',
   },
   wallet: Wallets.CoinbaseSmartWallet,
-  originVerification: {
+  domainVerification: {
     domain: "www.example.com",
     generateSignature: async (nonce, requestData) => {
       const payload = JSON.stringify({
@@ -143,7 +143,7 @@ const connector = createConnectorFromWallet({
     customScheme: 'myapp://',
   },
   wallet: Wallets.CoinbaseSmartWallet,
-  originVerification: {
+  domainVerification: {
     domain: "www.example.com",
     generateSignature: async (nonce, requestData) => {
       // Your signature implementation

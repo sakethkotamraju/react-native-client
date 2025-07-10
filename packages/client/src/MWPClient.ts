@@ -1,4 +1,6 @@
+import { postRequestToWallet } from './components/communication/postRequestToWallet';
 import { KeyManager } from './components/key/KeyManager';
+import { LIB_VERSION } from './version';
 import {
   decryptContent,
   encryptContent,
@@ -7,24 +9,21 @@ import {
 } from ':core/cipher/cipher';
 import { standardErrors } from ':core/error';
 import { RPCRequestMessage, RPCResponse, RPCResponseMessage } from ':core/message';
-import { AppMetadata, RequestArguments } from ':core/provider/interface';
+import { AppMetadata, DomainVerification, RequestArguments } from ':core/provider/interface';
 import { ScopedAsyncStorage } from ':core/storage/ScopedAsyncStorage';
 import { AddressString } from ':core/type';
 import { ensureIntNumber, hexStringFromNumber } from ':core/type/util';
-
-const ACCOUNTS_KEY = 'accounts';
-const ACTIVE_CHAIN_STORAGE_KEY = 'activeChain';
-const AVAILABLE_CHAINS_STORAGE_KEY = 'availableChains';
-const WALLET_CAPABILITIES_STORAGE_KEY = 'walletCapabilities';
-import { postRequestToWallet } from './components/communication/postRequestToWallet';
-import { LIB_VERSION } from './version';
 import {
   appendMWPResponsePath,
   checkErrorForInvalidRequestArgs,
   fetchRPCRequest,
 } from ':core/util/utils';
 import { Wallet } from ':core/wallet';
-import { OriginVerification } from ':core/provider/interface';
+
+const ACCOUNTS_KEY = 'accounts';
+const ACTIVE_CHAIN_STORAGE_KEY = 'activeChain';
+const AVAILABLE_CHAINS_STORAGE_KEY = 'availableChains';
+const WALLET_CAPABILITIES_STORAGE_KEY = 'walletCapabilities';
 
 type Chain = {
   id: number;
@@ -34,7 +33,7 @@ type Chain = {
 type MWPClientOptions = {
   metadata: AppMetadata;
   wallet: Wallet;
-  originVerification?: OriginVerification;
+  domainVerification?: DomainVerification;
 };
 
 export class MWPClient {
@@ -42,12 +41,12 @@ export class MWPClient {
   private readonly wallet: Wallet;
   private readonly keyManager: KeyManager;
   private readonly storage: ScopedAsyncStorage;
-  private readonly originVerification?: OriginVerification;
+  private readonly domainVerification?: DomainVerification;
 
   private accounts: AddressString[];
   private chain: Chain;
 
-  private constructor({ metadata, wallet, originVerification }: MWPClientOptions) {
+  private constructor({ metadata, wallet, domainVerification }: MWPClientOptions) {
     this.metadata = {
       ...metadata,
       name: metadata.name || 'Dapp',
@@ -55,7 +54,7 @@ export class MWPClient {
     };
 
     this.wallet = wallet;
-    this.originVerification = originVerification;
+    this.domainVerification = domainVerification;
     this.keyManager = new KeyManager({ wallet: this.wallet });
     this.storage = new ScopedAsyncStorage(this.wallet.name, 'MWPClient');
 
@@ -123,20 +122,6 @@ export class MWPClient {
     return accounts;
   }
 
-  /**
-   * Request a nonce for origin verification
-   * @returns Promise<string> - The nonce provided by the wallet
-   */
-  async getNonce(): Promise<string> {
-    if (!this.originVerification) {
-      throw standardErrors.rpc.internal('Origin verification not configured');
-    }
-
-    // For now, generate a UUID locally instead of calling the wallet API
-    // In the future, this would call: this.request({ method: 'wallet_getNonce' })
-    return crypto.randomUUID();
-  }
-
   async request(request: RequestArguments) {
     if (this.accounts.length === 0) {
       throw standardErrors.provider.unauthorized();
@@ -157,9 +142,6 @@ export class MWPClient {
         return hexStringFromNumber(this.chain.id);
       case 'wallet_getCapabilities':
         return this.storage.loadObject(WALLET_CAPABILITIES_STORAGE_KEY);
-      case 'wallet_getNonce':
-        // For now, generate a UUID locally instead of calling the wallet API
-        return crypto.randomUUID();
       case 'wallet_switchEthereumChain':
         return this.handleSwitchChainRequest(request);
       case 'eth_ecRecover':

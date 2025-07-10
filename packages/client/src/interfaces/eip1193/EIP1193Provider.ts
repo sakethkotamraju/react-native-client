@@ -3,7 +3,7 @@ import { standardErrorCodes, standardErrors } from ':core/error';
 import { serializeError } from ':core/error/serialize';
 import {
   AppMetadata,
-  OriginVerification,
+  DomainVerification,
   ProviderEventEmitter,
   ProviderInterface,
   RequestArguments,
@@ -13,7 +13,7 @@ import { Wallet } from ':core/wallet';
 type EIP1193ProviderOptions = {
   metadata: AppMetadata;
   wallet: Wallet;
-  originVerification?: OriginVerification;
+  domainVerification?: DomainVerification;
 };
 
 export class EIP1193Provider extends ProviderEventEmitter implements ProviderInterface {
