@@ -41,12 +41,15 @@ export class MWPClient {
   private readonly wallet: Wallet;
   private readonly keyManager: KeyManager;
   private readonly storage: ScopedAsyncStorage;
-  private readonly domainVerification?: DomainVerification;
 
   private accounts: AddressString[];
   private chain: Chain;
 
-  private constructor({ metadata, wallet, domainVerification }: MWPClientOptions) {
+  private constructor({
+    metadata,
+    wallet,
+    domainVerification: _domainVerification,
+  }: MWPClientOptions) {
     this.metadata = {
       ...metadata,
       name: metadata.name || 'Dapp',
@@ -54,7 +57,8 @@ export class MWPClient {
     };
 
     this.wallet = wallet;
-    this.domainVerification = domainVerification;
+    // Domain verification will be implemented in a future update
+    // this.domainVerification = domainVerification;
     this.keyManager = new KeyManager({ wallet: this.wallet });
     this.storage = new ScopedAsyncStorage(this.wallet.name, 'MWPClient');
 
