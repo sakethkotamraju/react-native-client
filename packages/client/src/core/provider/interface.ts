@@ -33,11 +33,11 @@ export interface ProviderInterface extends ProviderEventEmitter {
 
 export type ProviderEventCallback = ProviderInterface['emit'];
 
-export interface OriginVerification {
+export interface DomainVerificationConfig {
   /**
    * @param domain
    * @type string
-   * @description The domain for which origin verification is enabled
+   * @description The domain for which domain verification is enabled
    * @example "www.example.com"
    */
   domain: string;
@@ -51,6 +51,9 @@ export interface OriginVerification {
    */
   generateSignature: (nonce: string, requestData: unknown) => Promise<string>;
 }
+
+// Keep the old interface name for backwards compatibility
+export interface OriginVerification extends DomainVerificationConfig {}
 
 export interface AppMetadata {
   /**

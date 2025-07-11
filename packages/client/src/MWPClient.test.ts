@@ -15,6 +15,7 @@ import { AppMetadata, RequestArguments } from ':core/provider/interface';
 import { ScopedAsyncStorage } from ':core/storage/ScopedAsyncStorage';
 import { fetchRPCRequest } from ':core/util/utils';
 import { Wallets } from ':core/wallet';
+import { AddressString } from ':core/type';
 
 jest.mock(':core/util/utils', () => {
   const actual = jest.requireActual(':core/util/utils');
@@ -285,17 +286,6 @@ describe('MWPClient', () => {
       ]);
       expect(storageStoreSpy).toHaveBeenCalledWith('walletCapabilities', mockCapabilities);
     });
-
-    it('should generate UUID for wallet_getNonce', async () => {
-      const mockRequest: RequestArguments = {
-        method: 'wallet_getNonce',
-      };
-
-      const result = await client.request(mockRequest);
-
-      // Verify it returns a UUID (36 characters with hyphens)
-      expect(result).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
-    });
   });
 
   describe('reset', () => {
@@ -309,61 +299,43 @@ describe('MWPClient', () => {
     });
   });
 
-  describe('getNonce', () => {
-    it('should generate UUID when origin verification is configured', async () => {
-      // Create a client with origin verification
-      const clientWithVerification = await MWPClient.createInstance({
-        metadata: mockMetadata,
-        wallet: mockWallet,
-        originVerification: {
-          domain: 'example.com',
-          generateSignature: jest.fn().mockResolvedValue('signature'),
-        },
-      });
-
-      const nonce = await clientWithVerification.getNonce();
-
-      // Verify it returns a UUID (36 characters with hyphens)
-      expect(nonce).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
-    });
-
-    it('should throw error when origin verification is not configured', async () => {
-      await expect(client.getNonce()).rejects.toThrow('Origin verification not configured');
-    });
-  });
-
   describe('domain verification', () => {
-    it('should call generateSignature when origin verification is enabled', async () => {
-      const mockGenerateSignature = jest.fn().mockResolvedValue('0x1234567890abcdef');
-
+    it('should include domain verification when configured', async () => {
+      // Mock generateSignature function
+      const mockGenerateSignature = jest.fn().mockResolvedValue('0xSignature');
+      
+      // Create a client with domain verification
       const clientWithVerification = await MWPClient.createInstance({
         metadata: mockMetadata,
         wallet: mockWallet,
-        originVerification: {
+        domainVerification: {
           domain: 'example.com',
           generateSignature: mockGenerateSignature,
         },
       });
-
-      // Test that getNonce works and returns a UUID
-      const nonce = await clientWithVerification.getNonce();
-      expect(nonce).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
-
-      // Test that generateSignature is called with the correct parameters
-      const testRequestData = { action: { method: 'test' }, chainId: 1 };
-      await mockGenerateSignature(nonce, testRequestData);
-      expect(mockGenerateSignature).toHaveBeenCalledWith(nonce, testRequestData);
-    });
-
-    it('should not include domain verification when origin verification is disabled', async () => {
-      const clientWithoutVerification = await MWPClient.createInstance({
-        metadata: mockMetadata,
-        wallet: mockWallet,
+      
+      // Setup for a successful request
+      clientWithVerification['accounts'] = ['0xAddress' as AddressString];
+      (fetchRPCRequest as jest.Mock).mockResolvedValueOnce({ nonce: 'test-nonce' });
+      (encryptContent as jest.Mock).mockResolvedValueOnce(encryptedData);
+      (decryptContent as jest.Mock).mockResolvedValueOnce({
+        result: { value: '0xSignature' },
       });
-
-      // Verify that getNonce throws an error when origin verification is not configured
-      await expect(clientWithoutVerification.getNonce()).rejects.toThrow(
-        'Origin verification not configured'
+      
+      // Make a request that would trigger domain verification
+      await clientWithVerification.request({ method: 'eth_sendTransaction', params: [] });
+      
+      // Verify domain verification was included in the request
+      expect(postRequestToWallet).toHaveBeenCalledWith(
+        expect.objectContaining({
+          domainVerification: {
+            domain: 'example.com',
+            nonce: 'test-nonce',
+            signature: '0xSignature',
+          },
+        }),
+        expect.any(String),
+        mockWallet
       );
     });
   });

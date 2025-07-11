@@ -29,7 +29,8 @@ import {
   fetchRPCRequest,
 } from ':core/util/utils';
 import { Wallet } from ':core/wallet';
-import { OriginVerification } from ':core/provider/interface';
+import { DomainVerificationConfig } from ':core/provider/interface';
+import { DOMAIN_VERIFICATION_ENDPOINT } from ':core/constants';
 
 type Chain = {
   id: number;
@@ -39,7 +40,7 @@ type Chain = {
 type MWPClientOptions = {
   metadata: AppMetadata;
   wallet: Wallet;
-  originVerification?: OriginVerification;
+  domainVerification?: DomainVerificationConfig;
 };
 
 export class MWPClient {
@@ -47,12 +48,12 @@ export class MWPClient {
   private readonly wallet: Wallet;
   private readonly keyManager: KeyManager;
   private readonly storage: ScopedAsyncStorage;
-  private readonly originVerification?: OriginVerification;
+  private readonly domainVerification?: DomainVerificationConfig;
 
   private accounts: AddressString[];
   private chain: Chain;
 
-  private constructor({ metadata, wallet, originVerification }: MWPClientOptions) {
+  private constructor({ metadata, wallet, domainVerification }: MWPClientOptions) {
     this.metadata = {
       ...metadata,
       name: metadata.name || 'Dapp',
@@ -60,7 +61,7 @@ export class MWPClient {
     };
 
     this.wallet = wallet;
-    this.originVerification = originVerification;
+    this.domainVerification = domainVerification;
     this.keyManager = new KeyManager({ wallet: this.wallet });
     this.storage = new ScopedAsyncStorage(this.wallet.name, 'MWPClient');
 
@@ -129,17 +130,28 @@ export class MWPClient {
   }
 
   /**
-   * Request a nonce for origin verification
+   * Request a nonce for domain verification
    * @returns Promise<string> - The nonce provided by the wallet
    */
   async getNonce(): Promise<string> {
-    if (!this.originVerification) {
-      throw standardErrors.rpc.internal('Origin verification not configured');
+    if (!this.domainVerification) {
+      throw standardErrors.rpc.internal('Domain verification not configured');
     }
 
-    // For now, generate a UUID locally instead of calling the wallet API
-    // In the future, this would call: this.request({ method: 'wallet_getNonce' })
-    return crypto.randomUUID();
+    try {
+      // Call the coinbase_getNonce RPC endpoint
+      const response = await fetchRPCRequest(
+        {
+          method: 'coinbase_getNonce',
+          params: [{ domain: this.domainVerification.domain }],
+        },
+        DOMAIN_VERIFICATION_ENDPOINT
+      );
+      return response.nonce;
+    } catch (error) {
+      console.error('Failed to fetch nonce:', error);
+      throw standardErrors.rpc.internal('Failed to fetch nonce for domain verification');
+    }
   }
 
   async request(request: RequestArguments) {
@@ -162,9 +174,6 @@ export class MWPClient {
         return hexStringFromNumber(this.chain.id);
       case 'wallet_getCapabilities':
         return this.storage.loadObject(WALLET_CAPABILITIES_STORAGE_KEY);
-      case 'wallet_getNonce':
-        // For now, generate a UUID locally instead of calling the wallet API
-        return crypto.randomUUID();
       case 'wallet_switchEthereumChain':
         return this.handleSwitchChainRequest(request);
       case 'eth_ecRecover':
@@ -251,17 +260,17 @@ export class MWPClient {
     let domainVerification: DomainVerification | undefined;
 
     // Add domain verification if origin verification is enabled
-    if (this.originVerification) {
+    if (this.domainVerification) {
       const nonce = await this.getNonce();
       const requestData = {
         action: request,
         chainId: this.chain.id,
       };
 
-      const signature = await this.originVerification.generateSignature(nonce, requestData);
+      const signature = await this.domainVerification.generateSignature(nonce, requestData);
 
       domainVerification = {
-        domain: this.originVerification.domain,
+        domain: this.domainVerification.domain,
         nonce,
         signature,
       };

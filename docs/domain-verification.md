@@ -60,7 +60,7 @@ This allows Base to verify signatures from your domain.
 
 ### Basic Setup
 
-Add the `originVerification` parameter to your provider configuration:
+Add the `domainVerification` parameter to your provider configuration:
 
 ```typescript
 import { EIP1193Provider, Wallets } from '@mobile-wallet-protocol/client';
@@ -71,7 +71,7 @@ const provider = new EIP1193Provider({
     customScheme: 'myapp://',
   },
   wallet: Wallets.CoinbaseSmartWallet,
-  originVerification: {
+  domainVerification: {
     domain: "www.example.com",
     generateSignature: async (nonce, requestData) => {
       // Developer implements signing with their private key
@@ -110,7 +110,7 @@ const provider = new EIP1193Provider({
     customScheme: 'myapp://',
   },
   wallet: Wallets.CoinbaseSmartWallet,
-  originVerification: {
+  domainVerification: {
     domain: "www.example.com",
     generateSignature: async (nonce, requestData) => {
       const payload = JSON.stringify({
@@ -143,7 +143,7 @@ const connector = createConnectorFromWallet({
     customScheme: 'myapp://',
   },
   wallet: Wallets.CoinbaseSmartWallet,
-  originVerification: {
+  domainVerification: {
     domain: "www.example.com",
     generateSignature: async (nonce, requestData) => {
       // Your signature implementation
@@ -165,7 +165,7 @@ const connector = createConnectorFromWallet({
 
 ## How It Works
 
-1. **Nonce Request**: Before each RPC request, the SDK requests a nonce from the wallet
+1. **Nonce Request**: Before each RPC request, the SDK requests a nonce from the wallet API using the `coinbase_getNonce` RPC method
 2. **Signature Generation**: Your `generateSignature` function creates a cryptographic signature
 3. **Request Enhancement**: The signature is added to the RPC request
 4. **Verification**: Base verifies the signature against your published public key
