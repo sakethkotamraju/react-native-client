@@ -49,8 +49,6 @@ function generateDomainVerificationKeys() {
 
 function main() {
   try {
-    console.log('🔑 Generating Coinbase domain verification keys...\n');
-    
     const { jwks, privateKey } = generateDomainVerificationKeys();
     
     // Try to get the project root by going up from the current directory
@@ -68,18 +66,7 @@ function main() {
     const privateKeyPath = join(projectRoot, 'domain-verification-private-key.txt');
     writeFileSync(privateKeyPath, privateKey);
     
-    console.log('✅ Successfully generated domain verification keys!\n');
-    console.log('📁 Files created:');
-    console.log(`   • ${jwksPath} - JWKS file for your domain`);
-    console.log(`   • ${privateKeyPath} - Private key (keep this secure!)\n`);
-    
-    console.log('🌐 Next steps:');
-    console.log('   1. Host the base-jwks.json file at: https://yourdomain.com/.well-known/base-jwks.json');
-    console.log('   2. Store the private key securely for use with the SDK');
-    console.log('   3. Use the private key with the SDK\'s generateSignature function\n');
-    
   } catch (error) {
-    console.error('❌ Error generating domain verification keys:', error);
     process.exit(1);
   }
 }
